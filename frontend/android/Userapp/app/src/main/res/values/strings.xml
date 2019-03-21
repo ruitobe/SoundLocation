@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">User app</string>
+    <string name="User_name">Device name</string>
+    <string name="Pass_word">Pass word</string>
+    <string name="Stard">Login</string>
+    <string name="title_activity_main2">Main2Activity</string>
+    <string name="Start">Start</string>
+    <string name="device_infomation">Device information</string>
+</resources>
