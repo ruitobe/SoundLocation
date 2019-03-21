@@ -1,3 +1,3 @@
 <?php
-    $db=new MySQLi("localhost","root","","audio_location");
+    $db=new MySQLi("localhost","root","mysqlpasswd","audio_location");
 ?>
