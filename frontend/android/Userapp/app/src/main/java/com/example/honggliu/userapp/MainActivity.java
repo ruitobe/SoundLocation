@@ -29,6 +29,8 @@ public class MainActivity extends AppCompatActivity {
             public void run(){
                 EditText device_name=findViewById(R.id.user_name);
                 EditText password=findViewById(R.id.password);
+                EditText delaytime=findViewById(R.id.delaytime);
+                EditText periodtime=findViewById(R.id.periodtime);
                 TextView message=findViewById(R.id.message);
                 HttpURLConnection connection=null;
                 BufferedReader reader=null;
@@ -54,6 +56,8 @@ public class MainActivity extends AppCompatActivity {
                         Intent intent=new Intent(MainActivity.this,Main2Activity.class);
                         intent.putExtra("v_id", id);
                         intent.putExtra("v_device_name", device_name.getText().toString());
+                        intent.putExtra("v_delaytime",Integer.parseInt(delaytime.getText().toString()));
+                        intent.putExtra("v_periodtime",Integer.parseInt(periodtime.getText().toString()));
                         startActivity(intent);
                     }
                     else{

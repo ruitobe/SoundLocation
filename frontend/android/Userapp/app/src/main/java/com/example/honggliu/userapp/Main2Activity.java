@@ -1,25 +1,17 @@
 package com.example.honggliu.userapp;
 
 import android.Manifest;
-import android.content.Context;
-import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.location.Criteria;
-import android.location.Location;
-import android.location.LocationListener;
 import android.location.LocationManager;
 import android.media.MediaRecorder;
 import android.os.BatteryManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
-import android.provider.ContactsContract;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
+import android.text.TextUtils;
 import android.view.View;
 import android.widget.TextView;
 
@@ -32,7 +24,6 @@ import com.baidu.mapapi.map.MapStatusUpdate;
 import com.baidu.mapapi.map.MapStatusUpdateFactory;
 import com.baidu.mapapi.map.MapView;
 import com.baidu.mapapi.map.MyLocationData;
-import com.baidu.mapapi.map.SupportMapFragment;
 import com.baidu.mapapi.model.LatLng;
 
 import org.apache.commons.io.FileUtils;
@@ -45,16 +36,23 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Locale;
+import java.util.TimeZone;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.UUID;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
-
 public class Main2Activity extends AppCompatActivity {
     public int id;
     public String device_name="";
+    public int delaytime; //recording time
+    public int periodtime;//task1 periodtime
     public int state;
     public int frequency=96000;
     public int sample=44100;
@@ -69,17 +67,29 @@ public class Main2Activity extends AppCompatActivity {
     public double longitude;
     public double altitude;
     public long time;// system time
-    public long time2;//gps time
-    public long timegps;
+    //public long time2;//gps time
+    public long responsetime;
+    //public long timegps;
+    public long timeinterval=0;
     static final String[] LOCATIONGPS = new String[]{Manifest.permission.ACCESS_COARSE_LOCATION,
             Manifest.permission.ACCESS_FINE_LOCATION,
             Manifest.permission.READ_PHONE_STATE};
     Timer timer=null;//new Timer();
     Timer timer2=new Timer();
     TimerTask task=null;
+    //public final static ScheduledThreadPoolExecutor schedual=new ScheduledThreadPoolExecutor(3);
+    //public final static ScheduledThreadPoolExecutor schedual1=new ScheduledThreadPoolExecutor(1);
+    int flag2=0; //To tell if the timeinterval is first run.
+
     final TimerTask task2=new TimerTask(){
         @Override
         public void run(){
+            SntpClient sntpClient = new SntpClient();
+            if(sntpClient.requestTime("1.cn.pool.ntp.org",30000)){
+                long time3=sntpClient.getNtpTime();
+                long time4=System.currentTimeMillis();
+                timeinterval=time3-time4;
+            }
             HttpURLConnection connection=null;
             BufferedReader reader=null;
             try{
@@ -89,6 +99,23 @@ public class Main2Activity extends AppCompatActivity {
                 connection.setRequestMethod("GET");
                 connection.connect();
                 InputStream in=connection.getInputStream();
+                /*if(flag2==0) {
+                    String responsedate = connection.getHeaderField("Date");
+                    if (!TextUtils.isEmpty((responsedate))) {
+                        final SimpleDateFormat simpleDateFormat = new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss z",
+                                Locale.ENGLISH);
+                        TimeZone.setDefault(TimeZone.getTimeZone("GMT+8"));
+                        try {
+                            Date serverDate = simpleDateFormat.parse(responsedate);
+                            responsetime = serverDate.getTime();
+                            timeinterval=responsetime-System.currentTimeMillis();;
+                        } catch (Exception exception) {
+                            exception.printStackTrace();
+                        }
+                    }
+                //    flag2=1;
+               // }
+               */
                 reader=new BufferedReader(new InputStreamReader(in));
                 StringBuilder result=new StringBuilder();
                 String line;
@@ -104,6 +131,7 @@ public class Main2Activity extends AppCompatActivity {
                     task.cancel();
                     task=null;
                     timer.cancel();
+                    //schedual.shutdown();
                     timer=null;
                 }
                 else if(state==1){ //Turn Off
@@ -112,6 +140,7 @@ public class Main2Activity extends AppCompatActivity {
                     task=null;
                     timer.cancel();
                     timer=null;
+                    //schedual.shutdown();
                 }
                 else if(state==2){ //Turn on
                     if(sending==0){
@@ -119,7 +148,8 @@ public class Main2Activity extends AppCompatActivity {
                         @Override
                         public void run(){
                             sending=1;
-                            String recordfilename=Environment.getExternalStorageDirectory().getAbsolutePath()+"/"+System.currentTimeMillis();
+                            String filename=String.valueOf(System.currentTimeMillis()+timeinterval)+device_name;
+                            String recordfilename=Environment.getExternalStorageDirectory().getAbsolutePath()+"/"+filename;
                             recordfilename+=".mp4";
                             MediaRecorder recorder=new MediaRecorder();
                             recorder.setAudioSamplingRate(sample);
@@ -131,10 +161,11 @@ public class Main2Activity extends AppCompatActivity {
                             File file=new File(recordfilename);
                             try {
                                 recorder.prepare();
-                                time=System.currentTimeMillis();
-                                timegps=time2;
+                                //time=System.currentTimeMillis();
+                                time=System.currentTimeMillis()+timeinterval;
+                                //timegps=time2;
                                 recorder.start();
-                                Thread.sleep(500);
+                                Thread.sleep(delaytime);
                                 recorder.stop();
                                 recorder.release();
                                 HttpURLConnection connection=null;
@@ -144,23 +175,20 @@ public class Main2Activity extends AppCompatActivity {
                                 connection.setRequestMethod("POST");
                                 connection.setRequestProperty("Content-Type","application/x-www-form-urlencoded");
                                 connection.setDoOutput(true);
+                                connection.setReadTimeout(1);
                                 int battery = batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY);
                                 String data="device_id="+id+"&power="+battery+"&gpspos1="+latitude+"&gpspos2="+longitude+"&gpspos3="+altitude+"&state="+state;
                                 connection.getOutputStream().write(data.getBytes());
                                 connection.connect();
-                                InputStream in=connection.getInputStream();
-                                reader=new BufferedReader(new InputStreamReader(in));
-                                StringBuilder result=new StringBuilder();
-                                String line;
-                                while((line=reader.readLine())!=null){
-                                    result.append(line);
+                                try{ InputStream in=connection.getInputStream();} 
+                                catch(Exception e){
                                 }
-                                //Try to make multipart/form-data request
                                 url=new URL("http://139.196.126.51/ding/audio/AndroidInterfaces/device_data.php");
                                 String boundary= UUID.randomUUID().toString();
                                 connection=(HttpURLConnection)url.openConnection();
                                 connection.setRequestMethod("POST");
                                 connection.setDoOutput(true);
+                                connection.setReadTimeout(1);
                                 connection.setRequestProperty("Content-Type","multipart/form-data;boundary="+boundary);
                                 DataOutputStream request=new DataOutputStream(connection.getOutputStream());
                                 request.writeBytes("--"+boundary+"\r\n");
@@ -180,41 +208,47 @@ public class Main2Activity extends AppCompatActivity {
                                 request.writeBytes(time+"\r\n");
                                 request.writeBytes("--"+boundary+"\r\n");
                                 request.writeBytes("Content-Disposition:form-data;name=\"gpsts\"\r\n\r\n");
-                                request.writeBytes(timegps+"\r\n");
+                                request.writeBytes(timeinterval+"\r\n");
                                 request.writeBytes("--"+boundary+"\r\n");
                                 request.writeBytes("Content-Disposition:form-data;name=\"frequency\"\r\n\r\n");
                                 request.writeBytes(frequency+"\r\n");
                                 request.writeBytes("--"+boundary+"\r\n");
                                 request.writeBytes("Content-Disposition:form-data;name=\"samplenumber\"\r\n\r\n");
-                                request.writeBytes(sample/2+"\r\n");
+                                request.writeBytes(sample/10*9+"\r\n");
                                 request.writeBytes("--"+boundary+"\r\n");
                                 request.writeBytes("Content-Disposition:form-data;name=\"file\";filename=\""+file.getName()+"\"\r\n\r\n");
                                 request.write(FileUtils.readFileToByteArray(file));
                                 request.writeBytes("\r\n");
                                 request.writeBytes("--"+boundary+"--\r\n");
                                 request.flush();
-                                int respCode=connection.getResponseCode();
-                                 in=connection.getInputStream();
-                                reader=new BufferedReader(new InputStreamReader(in));
-                                result=new StringBuilder();
-                                while((line=reader.readLine())!=null){
-                                    result.append(line);
+
+                                try{ InputStream in=connection.getInputStream();} 
+                                catch(Exception e){
                                 }
                             }catch(Exception e){
                                 e.printStackTrace();
                             }
                         }
                     };
+
                         timer=new Timer();
-                        Date date=new Date((long)((System.currentTimeMillis()+2000)/1000)*1000);
-                        timer.schedule(task,date,1000);
+                        long target=((System.currentTimeMillis()+timeinterval)/1000+2)*1000;
+                        long delay=target-System.currentTimeMillis()-timeinterval;
+                        timer.schedule(task,delay,periodtime);
+                        //schedual.scheduleAtFixedRate(task,delay,periodtime, TimeUnit.MILLISECONDS);
                         sending=1;
                     }
                 }
-                TextView textView=findViewById(R.id.info);
-                long time_now=System.currentTimeMillis();
-                textView.setText("Name:"+device_name+" state:"+state+" lat:"+latitude+" lot:"+longitude+" alt:"+altitude+" gpsts:"+time2+" systs:"+time_now);
-                //Refresh power and GPS info
+                View view=getWindow().getDecorView();
+                view.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        TextView textView=findViewById(R.id.info);
+                        long time_now=System.currentTimeMillis()+timeinterval;
+                        textView.setText("Name:"+device_name+" state:"+state+" lat:"+latitude+" lot:"+longitude+" alt:"+altitude+" alter:"+timeinterval+" systs:"+time_now);
+                    }
+                });
+               //Refresh power and GPS info
                 url=new URL("http://139.196.126.51/ding/audio/AndroidInterfaces/device_state.php" );
                 connection=(HttpURLConnection)url.openConnection();
                 connection.setRequestMethod("POST");
@@ -225,11 +259,6 @@ public class Main2Activity extends AppCompatActivity {
                 connection.getOutputStream().write(data.getBytes());
                 connection.connect();
                 in=connection.getInputStream();
-                reader=new BufferedReader(new InputStreamReader(in));
-                result=new StringBuilder();
-                while((line=reader.readLine())!=null){
-                    result.append(line);
-                }
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -245,6 +274,9 @@ public class Main2Activity extends AppCompatActivity {
         mBaiduMap=mMapView.getMap();
         id=getIntent().getIntExtra("v_id",0);
         device_name=getIntent().getStringExtra("v_device_name");
+        delaytime=getIntent().getIntExtra("v_delaytime",600);
+        periodtime=getIntent().getIntExtra("v_periodtime",1000);
+
 
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             // TODO: Consider calling
@@ -258,28 +290,25 @@ public class Main2Activity extends AppCompatActivity {
         }
         judgePermission();
         batteryManager=(BatteryManager)getSystemService(BATTERY_SERVICE);
-        //This is the Android Studio Inside GPS method
+        //This is the Android Studio Inside GPS method. Not using for now.
+        /*
         LocationManager lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-        //++
         String provider;
-
         Criteria criteria =new Criteria();
         criteria.setAccuracy(Criteria.ACCURACY_FINE);// 高精度
         criteria.setAltitudeRequired(true);// 不要求海拔
         criteria.setBearingRequired(true);// 不要求方位
         criteria.setCostAllowed(true);// 允许有花
         criteria.setSpeedRequired(true);
-        //criteria.setSpeedAccuracy(Criteria.ACCURACY_HIGH);
         criteria.setPowerRequirement(Criteria.POWER_HIGH);
         provider = lm.getBestProvider(criteria, true);
-        //++
         LocationListener ll = new mysecondlocationlistener();
         //lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, ll);
-        lm.requestLocationUpdates(provider, 0, 0, ll);
-        //lm.requestLocationUpdates(provider, 1*1000, 0, ll);
+        lm.requestLocationUpdates(provider, 0, 0, ll);*/
         //This is Baidu Map
         mBaiduMap.setMyLocationEnabled(true);
-        timer2.schedule(task2,0,10000);
+        timer2.schedule(task2,5000,10000);
+        //schedual1.scheduleAtFixedRate(task2,5000,10000, TimeUnit.MILLISECONDS);
     }
     @Override
     protected void onResume(){
@@ -295,6 +324,12 @@ public class Main2Activity extends AppCompatActivity {
     protected void onDestroy(){
         super.onDestroy();
         mMapView.onDestroy();
+        task.cancel();
+        //schedual1.shutdown();
+        timer.cancel();
+        task2.cancel();
+        //schedual.shutdown();
+        timer2.cancel();
     }
     protected void judgePermission() {
 
@@ -430,21 +465,11 @@ public class Main2Activity extends AppCompatActivity {
             }
         }
     }
+    /*
     private class mysecondlocationlistener implements  LocationListener{
         public void onLocationChanged(Location location){
             //location.setTime(System.currentTimeMillis());
             time2=location.getTime();
-            /*latitude=location.getLatitude();
-            longitude=location.getLongitude();
-            altitude=location.getAltitude();
-            MyLocationData locData=new MyLocationData.Builder().latitude(latitude).longitude(longitude).build();
-            mBaiduMap.setMyLocationData(locData);
-            if(flag==0){
-                LatLng GEO = new LatLng(latitude,longitude);
-                MapStatusUpdate status1 = MapStatusUpdateFactory.newLatLng(GEO);
-                mBaiduMap.setMapStatus(status1);
-                flag=1;
-            }*/
         }
         public void onStatusChanged(String provider, int status, Bundle extras){
 
@@ -456,5 +481,6 @@ public class Main2Activity extends AppCompatActivity {
 
         }
     }
+    */
 }
 

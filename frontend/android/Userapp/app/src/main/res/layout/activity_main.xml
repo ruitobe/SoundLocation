@@ -21,6 +21,16 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="@string/Pass_word" />
+        <EditText
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/delaytime"
+            android:text="600"/>
+        <EditText
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/periodtime"
+            android:text="1000"/>
         <Button
             android:layout_width="100dp"
             android:layout_height="wrap_content"
