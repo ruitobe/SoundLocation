@@ -29,7 +29,7 @@
     }
     else if ('GET' == $_SERVER['REQUEST_METHOD']) {
         $device_id=$_GET['device_id'];
-        $query='select state from devicestate where deviceid='.$device_id;
+        $query='select deviceid,power,state from devicestate where deviceid='.$device_id;
         $result=$db->query($query);
         if($result->num_rows>0){
             $row=$result->fetch_assoc();

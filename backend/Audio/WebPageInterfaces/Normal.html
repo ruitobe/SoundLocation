@@ -1,0 +1,34 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>User and Devices management</title>
+	<link rel="stylesheet" type="text/css" href="https://www.jeasyui.com/easyui/themes/default/easyui.css">
+	<link rel="stylesheet" type="text/css" href="https://www.jeasyui.com/easyui/themes/icon.css">
+	<link rel="stylesheet" type="text/css" href="https://www.jeasyui.com/easyui/themes/color.css">
+	<link rel="stylesheet" type="text/css" href="https://www.jeasyui.com/easyui/demo/demo.css">
+	<script type="text/javascript" src="https://code.jquery.com/jquery-1.9.1.min.js"></script>
+	<script type="text/javascript" src="https://www.jeasyui.com/easyui/jquery.easyui.min.js"></script>
+</head>
+<body>
+<!--Rudio table-->
+<h2>Rudio table</h2>
+<table id="dg3" title="Radio" class="easyui-datagrid" style="width:1000px;height:500px"
+		url="Radio/GetAll.php"
+		toolbar="#toolbar3" pagination="true"
+		rownumbers="true" fitColumns="true" singleSelect="true">
+	<thead>
+		<tr>
+			<th field="gpsts" width="50">GPS time stamp</th>
+			<th field="gpspos1" width="50">gpspos1</th>
+			<th field="gpspos2" width="50">gpspos2</th>
+			<th field="gpspos3" width="50">gpspos3</th>
+			<th field="radiostrength" width="50">radiostrength</th>
+		</tr>
+	</thead>
+</table>
+<div id="toolbar3">
+</div>
+</body>
+</html>

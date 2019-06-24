@@ -1,0 +1,202 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>User and Devices management</title>
+	<link rel="stylesheet" type="text/css" href="https://www.jeasyui.com/easyui/themes/default/easyui.css">
+	<link rel="stylesheet" type="text/css" href="https://www.jeasyui.com/easyui/themes/icon.css">
+	<link rel="stylesheet" type="text/css" href="https://www.jeasyui.com/easyui/themes/color.css">
+	<link rel="stylesheet" type="text/css" href="https://www.jeasyui.com/easyui/demo/demo.css">
+	<script type="text/javascript" src="https://code.jquery.com/jquery-1.9.1.min.js"></script>
+	<script type="text/javascript" src="https://www.jeasyui.com/easyui/jquery.easyui.min.js"></script>
+</head>
+<body>
+<!--User table-->
+	<h2>User table</h2>
+	<table id="dg" title="Users" class="easyui-datagrid" style="width:1000px;height:500px"
+			url="User/GetAll.php"
+			toolbar="#toolbar" pagination="true"
+			rownumbers="true" fitColumns="true" singleSelect="true">
+		<thead>
+			<tr>
+				<th field="username" width="50">User name</th>
+				<th field="password" width="50">Password</th>
+				<th field="type" width="50">type</th>
+			</tr>
+		</thead>
+	</table>
+	<div id="toolbar">
+		<a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-add" plain="true" onclick="newUser()">New User</a>
+		<a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-edit" plain="true" onclick="editUser()">Edit User</a>
+		<a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-remove" plain="true" onclick="destroyUser()">Remove User</a>
+	</div>
+	
+	<div id="dlg" class="easyui-dialog" style="width:400px" data-options="closed:true,modal:true,border:'thin',buttons:'#dlg-buttons'">
+		<form id="fm" method="post" novalidate style="margin:0;padding:20px 50px">
+			<h3>User Information</h3>
+            <div style="margin-bottom:10px">
+                <input id="rowid" name="userid" type="hidden">
+				<input name="username" class="easyui-textbox" required="true" label="Username:" style="width:100%">
+			</div>
+			<div style="margin-bottom:10px">
+				<input name="password" class="easyui-textbox" required="true" label="Password:" style="width:100%">
+			</div>
+			<div style="margin-bottom:10px">
+				<input name="type" class="easyui-textbox" required="true" label="Type:" style="width:100%">
+			</div>
+		</form>
+	</div>
+	<div id="dlg-buttons">
+		<a href="javascript:void(0)" class="easyui-linkbutton c6" iconCls="icon-ok" onclick="saveUser()" style="width:90px">Save</a>
+		<a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-cancel" onclick="javascript:$('#dlg').dialog('close')" style="width:90px">Cancel</a>
+	</div>
+<!--Device table-->
+	<h2>Device table</h2>
+	<table id="dg2" title="Devices" class="easyui-datagrid" style="width:1000px;height:500px"
+			url="Device/GetAll.php"
+			toolbar="#toolbar2" pagination="true"
+			rownumbers="true" fitColumns="true" singleSelect="true">
+		<thead>
+			<tr>
+				<th field="devicename" width="50">Device name</th>
+				<th field="password" width="50">Password</th>
+				<th field="gpspos1" width="50">gpspos1</th>
+				<th field="gpspos2" width="50">gpspos2</th>
+				<th field="gpspos3" width="50">gpspos3</th>
+				<th field="power" width="50">power</th>
+				<th field="state" width="50">state</th>
+			</tr>
+		</thead>
+	</table>
+	<div id="toolbar2">
+		<a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-add" plain="true" onclick="newDevice()">New Device</a>
+		<a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-edit" plain="true" onclick="editDevice()">Edit Device</a>
+		<a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-remove" plain="true" onclick="destroyDevice()">Remove Device</a>
+	</div>
+	
+	<div id="dlg2" class="easyui-dialog" style="width:400px" data-options="closed:true,modal:true,border:'thin',buttons:'#dlg-buttons'">
+		<form id="fm2" method="post" novalidate style="margin:0;padding:20px 50px">
+			<h3>User Information</h3>
+            <div style="margin-bottom:10px">
+                <input id="rowid2" name="deviceid" type="hidden">
+				<input name="devicename" class="easyui-textbox" required="true" label="Devicename:" style="width:100%">
+			</div>
+			<div style="margin-bottom:10px">
+				<input name="password" class="easyui-textbox" required="true" label="Password:" style="width:100%">
+			</div>
+			<div style="margin-bottom:10px">
+				<input name="state" class="easyui-textbox" required="true" label="State:" style="width:100%">
+			</div>
+		</form>
+	</div>
+	<div id="dlg-buttons">
+		<a href="javascript:void(0)" class="easyui-linkbutton c6" iconCls="icon-ok" onclick="saveDevice()" style="width:90px">Save</a>
+		<a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-cancel" onclick="javascript:$('#dlg2').dialog('close')" style="width:90px">Cancel</a>
+	</div>
+<!--Rudio table-->
+<h2>Rudio table</h2>
+<table id="dg3" title="Radio" class="easyui-datagrid" style="width:1000px;height:500px"
+		url="Radio/GetAll.php"
+		toolbar="#toolbar3" pagination="true"
+		rownumbers="true" fitColumns="true" singleSelect="true">
+	<thead>
+		<tr>
+			<th field="gpsts" width="50">GPS time stamp</th>
+			<th field="gpspos1" width="50">gpspos1</th>
+			<th field="gpspos2" width="50">gpspos2</th>
+			<th field="gpspos3" width="50">gpspos3</th>
+			<th field="radiostrength" width="50">radiostrength</th>
+		</tr>
+	</thead>
+</table>
+<div id="toolbar3">
+</div>
+<!--User Script-->
+	<script type="text/javascript">
+		var url;
+		function newUser(){
+			$('#dlg').dialog('open').dialog('center').dialog('setTitle','New User');
+			$('#fm').form('clear');
+			url = 'User/AddUser.php';
+		}
+		function editUser(){
+			var row = $('#dg').datagrid('getSelected');
+			if (row){
+				$('#dlg').dialog('open').dialog('center').dialog('setTitle','Edit User');
+				$('#fm').form('load',row);
+                $('#rowid').val(row.id);
+				url = 'User/UpdateUser.php';
+			}
+		}
+		function saveUser(){        
+			$('#fm').form('submit',{
+				url: url,
+				onSubmit: function(){
+					return $(this).form('validate');
+				},
+				success: function(result){
+                    alert(result);
+						$('#dlg').dialog('close');		// close the dialog
+						$('#dg').datagrid('reload');	// reload the user data
+				}
+			});
+		}
+		function destroyUser(){
+			var row = $('#dg').datagrid('getSelected');
+			if (row){
+				$.messager.confirm('Confirm','Are you sure you want to destroy this user?',function(r){
+					if (r){
+						$.post('User/DeleteUser.php',{userid:row.id},function(result){
+								$('#dg').datagrid('reload');	// reload the user data
+						},'json');
+					}
+				});
+			}
+		}
+	</script>
+<!--Device Script-->
+	<script type="text/javascript">
+		var url;
+		function newDevice(){
+			$('#dlg2').dialog('open').dialog('center').dialog('setTitle','New Device');
+			$('#fm2').form('clear');
+			url = 'Device/AddDevice.php';
+		}
+		function editDevice(){
+			var row = $('#dg2').datagrid('getSelected');
+			if (row){
+				$('#dlg2').dialog('open').dialog('center').dialog('setTitle','Edit Device');
+				$('#fm2').form('load',row);
+                $('#rowid2').val(row.id);
+				url = 'Device/UpdateDevice.php';
+			}
+		}
+		function saveDevice(){        
+			$('#fm2').form('submit',{
+				url: url,
+				onSubmit: function(){
+					return $(this).form('validate');
+				},
+				success: function(result){
+                    //alert(result);
+						$('#dlg2').dialog('close');		// close the dialog
+						$('#dg2').datagrid('reload');	// reload the user data
+				}
+			});
+		}
+		function destroyDevice(){
+			var row = $('#dg2').datagrid('getSelected');
+			if (row){
+				$.messager.confirm('Confirm','Are you sure you want to destroy this user?',function(r){
+					if (r){
+						$.post('Device/DeleteDevice.php',{deviceid:row.id},function(result){
+								$('#dg2').datagrid('reload');	// reload the user data
+						},'json');
+					}
+				});
+			}
+		}
+	</script>
+</body>
+</html>
